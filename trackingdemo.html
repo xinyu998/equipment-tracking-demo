@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auxiliary Equipment Tracking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .role-btn:hover {
+            border-color: #0066cc;
+        }
+
+        .role-btn.active {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+        }
+
+        .role-btn:not(.active) {
+            opacity: 0.4;
+        }
+
+        .role-content {
+            display: none;
+        }
+
+        .role-content.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0052a3;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            color: #555;
+            font-size: 18px;
+        }
+
+        .cleaning-type {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .type-24h {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .type-light {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .type-deep {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .queue-list {
+            margin-top: 20px;
+        }
+
+        .queue-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .queue-priority {
+            font-weight: 600;
+            color: #0066cc;
+        }
+
+        .queue-details {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .complete-btn {
+            background: #28a745;
+            margin-top: 10px;
+            padding: 8px 16px;
+            width: auto;
+        }
+
+        .complete-btn:hover {
+            background: #218838;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Auxiliary Equipment Tracking System</h1>
+
+        <div class="role-selector">
+            <button class="role-btn active" onclick="switchRole('changeover')">CHO Operator</button>
+            <button class="role-btn" onclick="switchRole('cleaning')">Material Handler</button>
+        </div>
+
+ <!-- Add search function
+   classcify by task, not roles
+   Add blender grinder SAP -->
+        <div id="changeover-content" class="role-content active">
+            <div class="input-group">
+                <label>Select Task Type</label>
+                <select id="task-type" onchange="showTaskInput()">
+                    <option value="">-- Select Task --</option>
+                    <option value="send">Order End </option>
+                    <option value="retrieve">Order Start </option>
+                </select>
+            </div>
+
+            <!-- Send Equipment Task -->
+            <div id="send-task" style="display: none;">
+                <div class="input-group">
+                    <label>Current Machine Number / Order Number</label>
+                    <input type="text" id="current-machine" placeholder="e.g., 1101 or 154238">
+                </div>
+                <button onclick="checkCleaningType()">Check Cleaning Requirements</button>
+                
+                <div id="send-result" class="result-box">
+                    <div class="result-item">
+                        <div class="result-label">Cleaning Type Required</div>
+                        <div class="result-value">
+                            <span id="cleaning-type-display" class="cleaning-type"></span>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Equipment Details</div>
+                        <div class="result-value" id="equipment-details"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Destination</div>
+                        <div class="result-value" id="destination"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retrieve Equipment Task -->
+            <div id="retrieve-task" style="display: none;">
+                <div class="input-group">
+                    <label>Next Machine Number / Order Number</label>
+                    <input type="text" id="next-machine" placeholder="e.g., 1208 or 123456">
+                </div>
+                <button onclick="findCleanedEquipment()">Find Equipment Location</button>
+                
+                <div id="retrieve-result" class="result-box">
+                    <div class="result-item">
+                        <div class="result-label">Equipment Location</div>
+                        <div class="result-value" id="bin-location"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Equipment Set</div>
+                        <div class="result-value" id="equipment-set"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Cleaning Completed</div>
+                        <div class="result-value" id="completion-time"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Status</div>
+                        <div class="result-value" id="equipment-status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleaning Operator Interface -->
+        <div id="cleaning-content" class="role-content">
+            <div class="alert alert-info">
+                Equipment queue is sorted by priority. Clean items from top to bottom.
+            </div>
+
+            <div class="queue-list" id="cleaning-queue">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sam
+        const equipmentDatabase = {
+            '1101': {
+                blender: 'BLD-025',
+                grinder: 'GRD-018',
+                cleaningType: '24h',
+                nextMachine: '1105',
+                orderNumber: '154238'
+            },
+            '1102': {
+                blender: 'BLD-033',
+                grinder: 'GRD-027',
+                cleaningType: 'light',
+                bin: 'LC-02',
+                orderNumber: '167892'
+            },
+            '1107': {
+                blender: 'BLD-041',
+                grinder: 'GRD-035',
+                cleaningType: '24h',
+                nextMachine: '1110',
+                orderNumber: '189324'
+            },
+            '1203': {
+                blender: 'BLD-012',
+                grinder: 'GRD-009',
+                cleaningType: 'light',
+                bin: 'LC-05',
+                orderNumber: '187453'
+            },
+            '1209': {
+                blender: 'BLD-047',
+                grinder: 'GRD-038',
+                cleaningType: 'deep',
+                bin: 'DC-01',
+                orderNumber: '145678'
+            },
+            '3513': {
+                blender: 'BLD-029',
+                grinder: 'GRD-021',
+                cleaningType: '24h',
+                nextMachine: '3518',
+                orderNumber: '234561'
+            },
+            '3515': {
+                blender: 'BLD-031',
+                grinder: 'GRD-022',
+                cleaningType: 'deep',
+                bin: 'DC-03',
+                orderNumber: '219867'
+            },
+            '3520': {
+                blender: 'BLD-053',
+                grinder: 'GRD-044',
+                cleaningType: 'light',
+                bin: 'LC-09',
+                orderNumber: '198345'
+            },
+            '154238': {
+                blender: 'BLD-025',
+                grinder: 'GRD-018',
+                cleaningType: '24h',
+                nextMachine: '1105',
+                orderNumber: '154238'
+            },
+            '187453': {
+                blender: 'BLD-012',
+                grinder: 'GRD-009',
+                cleaningType: 'light',
+                bin: 'LC-05',
+                orderNumber: '187453'
+            },
+            '219867': {
+                blender: 'BLD-031',
+                grinder: 'GRD-022',
+                cleaningType: 'deep',
+                bin: 'DC-03',
+                orderNumber: '219867'
+            }
+        };
+// scanning 
+        const cleanedEquipment = {
+            '1208': {
+                bin: 'AC-08',
+                blender: 'BLD-017',
+                grinder: 'GRD-014',
+                completedTime: '2026-01-28 09:30',
+                cleaningType: 'light'
+            },
+            '1112': {
+                bin: 'AC-04',
+                blender: 'BLD-039',
+                grinder: 'GRD-031',
+                completedTime: '2026-01-28 08:45',
+                cleaningType: 'deep'
+            },
+            '3521': {
+                bin: 'AC-03',
+                blender: 'BLD-044',
+                grinder: 'GRD-036',
+                completedTime: '2026-01-28 10:00',
+                cleaningType: 'light'
+            },
+            '123456': {
+                bin: 'AC-02',
+                blender: 'BLD-028',
+                grinder: 'GRD-020',
+                completedTime: '2026-01-28 08:15',
+                cleaningType: 'deep'
+            },
+            '176543': {
+                bin: 'AC-07',
+                blender: 'BLD-051',
+                grinder: 'GRD-042',
+                completedTime: '2026-01-28 09:15',
+                cleaningType: 'light'
+            }
+        };
+
+        let cleaningQueue = [
+            {
+                id: 1,
+                blender: 'BLD-012',
+                grinder: 'GRD-009',
+                cleaningType: 'light',
+                priority: 1,
+                assignedBin: 'LC-05',
+                receivedTime: '2026-01-28 10:15'
+            },
+            {
+                id: 2,
+                blender: 'BLD-031',
+                grinder: 'GRD-022',
+                cleaningType: 'deep',
+                priority: 2,
+                assignedBin: 'DC-03',
+                receivedTime: '2026-01-28 10:20'
+            },
+            {
+                id: 3,
+                blender: 'BLD-045',
+                grinder: 'GRD-033',
+                cleaningType: 'light',
+                priority: 3,
+                assignedBin: 'LC-06',
+                receivedTime: '2026-01-28 10:25'
+            }
+        ];
+
+        function switchRole(role) {
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+         
+            document.querySelectorAll('.role-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(role + '-content').classList.add('active');
+
+            if (role === 'cleaning') {
+                loadCleaningQueue();
+            }
+        }
+
+        function showTaskInput() {
+            const taskType = document.getElementById('task-type').value;
+            document.getElementById('send-task').style.display = 'none';
+            document.getElementById('retrieve-task').style.display = 'none';
+            document.getElementById('send-result').classList.remove('show');
+            document.getElementById('retrieve-result').classList.remove('show');
+
+            if (taskType === 'send') {
+                document.getElementById('send-task').style.display = 'block';
+            } else if (taskType === 'retrieve') {
+                document.getElementById('retrieve-task').style.display = 'block';
+            }
+        }
+
+        function checkCleaningType() {
+            const machineNumber = document.getElementById('current-machine').value.trim();
+            const equipment = equipmentDatabase[machineNumber];
+
+            if (!equipment) {
+                alert('Machine/Order number not found. Try machine numbers: 1101, 1102, 1107, 1203, 1209, 3513, 3515, 3520 or order numbers: 154238, 187453, 219867');
+                return;
+            }
+
+            const resultBox = document.getElementById('send-result');
+            const cleaningTypeDisplay = document.getElementById('cleaning-type-display');
+            const equipmentDetails = document.getElementById('equipment-details');
+            const destination = document.getElementById('destination');
+
+            // Set cleaning type
+            let typeClass = '';
+            let typeName = '';
+            let destinationText = '';
+
+            if (equipment.cleaningType === '24h') {
+                typeClass = 'type-24h';
+                typeName = '24H Reuse';
+                destinationText = `Move directly to Machine ${equipment.nextMachine}<br>No cleaning required`;
+            } else if (equipment.cleaningType === 'light') {
+                typeClass = 'type-light';
+                typeName = 'Light Cleaning';
+                destinationText = `Light Cleaning Area<br>Assigned Bin: ${equipment.bin}`;
+            } else {
+                typeClass = 'type-deep';
+                typeName = 'Deep Cleaning';
+                destinationText = `Deep Cleaning Area<br>Assigned Bin: ${equipment.bin}`;
+            }
+
+            cleaningTypeDisplay.className = `cleaning-type ${typeClass}`;
+            cleaningTypeDisplay.textContent = typeName;
+            equipmentDetails.innerHTML = `Blender: ${equipment.blender}<br>Grinder: ${equipment.grinder}`;
+            destination.innerHTML = destinationText;
+
+            resultBox.classList.add('show');
+        }
+
+        function findCleanedEquipment() {
+            const searchKey = document.getElementById('next-machine').value.trim();
+            const equipment = cleanedEquipment[searchKey];
+
+            if (!equipment) {
+                alert('No cleaned equipment found. Try machine numbers: 1208, 1112, 3521 or order numbers: 123456, 176543');
+                return;
+            }
+
+            const resultBox = document.getElementById('retrieve-result');
+            document.getElementById('bin-location').innerHTML = `<strong>${equipment.bin}</strong> (Already Cleaned Area)`;
+            document.getElementById('equipment-set').innerHTML = `Blender: ${equipment.blender}<br>Grinder: ${equipment.grinder}`;
+            document.getElementById('completion-time').textContent = equipment.completedTime;
+            document.getElementById('equipment-status').innerHTML = '<span style="color: #28a745; font-weight: 600;">Ready for Installation</span>';
+
+            resultBox.classList.add('show');
+        }
+
+        function loadCleaningQueue() {
+            const queueContainer = document.getElementById('cleaning-queue');
+            queueContainer.innerHTML = '';
+
+            cleaningQueue.forEach(item => {
+                let typeClass = '';
+                let typeName = '';
+
+                if (item.cleaningType === 'light') {
+                    typeClass = 'type-light';
+                    typeName = 'Light Cleaning';
+                } else {
+                    typeClass = 'type-deep';
+                    typeName = 'Deep Cleaning';
+                }
+
+                const queueItem = document.createElement('div');
+                queueItem.className = 'queue-item';
+                queueItem.innerHTML = `
+                    <div class="queue-header">
+                        <span class="queue-priority">Priority ${item.priority}</span>
+                        <span class="cleaning-type ${typeClass}">${typeName}</span>
+                    </div>
+                    <div class="queue-details">
+                        <strong>Equipment:</strong> Blender ${item.blender}, Grinder ${item.grinder}<br>
+                        <strong>To Bin:</strong> ${item.assignedBin}<br>
+                        <strong>Received:</strong> ${item.receivedTime}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 14px;">Return to AC Bin:</label>
+                        <select id="ac-bin-${item.id}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            <option value="">-- Select AC Bin --</option>
+                            <option value="AC-01">AC-01</option>
+                            <option value="AC-02">AC-02</option>
+                            <option value="AC-03">AC-03</option>
+                            <option value="AC-04">AC-04</option>
+                            <option value="AC-05">AC-05</option>
+                            <option value="AC-06">AC-06</option>
+                            <option value="AC-07">AC-07</option>
+                            <option value="AC-08">AC-08</option>
+                            <option value="AC-09">AC-09</option>
+                            <option value="AC-10">AC-10</option>
+                        </select>
+                    </div>
+                    <button class="complete-btn" onclick="completeTask(${item.id})">Mark as Completed</button>
+                `;
+                queueContainer.appendChild(queueItem);
+            });
+
+            if (cleaningQueue.length === 0) {
+                queueContainer.innerHTML = '<div class="alert alert-info">No equipment in cleaning queue</div>';
+            }
+        }
+
+        function completeTask(taskId) {
+            const acBinSelect = document.getElementById(`ac-bin-${taskId}`);
+            const selectedBin = acBinSelect.value;
+            
+            if (!selectedBin) {
+                alert('Please select an AC bin location before marking as completed');
+                return;
+            }
+            
+            // In a real system, this would save the AC bin location with the completed task
+            cleaningQueue = cleaningQueue.filter(item => item.id !== taskId);
+            loadCleaningQueue();
+        }
+
+        // Initial load for cleaning queue
+        loadCleaningQueue();
+    </script>
+</body>
+</html>
